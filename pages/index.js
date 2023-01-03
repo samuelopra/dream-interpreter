@@ -87,14 +87,14 @@ const Home = () => {
           </div>
         )}
       </div>
-      <div className='badge-container grow'>
+      {/* <div className='badge-container grow'>
         <a href='https://paramint.digital' target='_blank' rel='noreferrer'>
           <div className='badge'>
             <Image src={paramintLogo} alt='paramint logo' />
             <p>dream interpreter by Paramint</p>
           </div>
         </a>
-      </div>
+      </div> */}
     </div>
   );
 };
