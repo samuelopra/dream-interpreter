@@ -6,6 +6,13 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
+const addPeriod = (input) => {
+  if (!input.match(/[.!?]$/)) {
+    input += '.';
+  }
+  return input;
+};
+
 const basePromptPrefix = `
 Write me a Freudian analysis of the following dream in a casual tone spoken by a 23-year-old from Brooklyn, New York:
 
@@ -15,9 +22,11 @@ const generateAction = async (req, res) => {
   // Run first prompt
   console.log(`API: ${basePromptPrefix}${req.body.userInput}`);
 
+  const finalUserInput = addPeriod(req.body.userInput);
+
   const baseCompletion = await openai.createCompletion({
     model: 'text-davinci-003',
-    prompt: `${basePromptPrefix}${req.body.userInput}.`,
+    prompt: `${basePromptPrefix}${finalUserInput}`,
     temperature: 0.8,
     max_tokens: 500,
   });
