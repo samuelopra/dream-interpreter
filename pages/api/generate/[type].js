@@ -19,7 +19,7 @@ Dream: `;
 
 const generateGPT3Res = async (prompt) => {
     return await openai.createCompletion({
-        model: 'text-davinci-003',
+        model: 'text-davinci-002',
         prompt,
         temperature: 0.8,
         max_tokens: 500,
@@ -60,7 +60,8 @@ const generateImage = async (req, res) => {
         })
     }
 
-    const prompt = `Generate a DALE-2 prompt for this: ${userInput}`
+    const prompt = `Generate a DALE-2 image generation prompt for this text:
+    Text: ${userInput}`
     console.log(`Final image gpt3 prompt: `, prompt)
     // generate a DALE 2 prompt
     const gpt3res = await generateGPT3Res(prompt)
