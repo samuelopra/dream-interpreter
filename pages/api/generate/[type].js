@@ -19,12 +19,20 @@ Dream: `;
 
 const generateGPT3Res = async (prompt) => {
     return await openai.createCompletion({
-        model: 'text-davinci-002',
+        model: 'text-davinci-003',
         prompt,
         temperature: 0.8,
         max_tokens: 500,
     });
 }
+
+const generateDale2Image = async (prompt) => {
+    return await openai.createImage({
+        prompt,
+        n: 1,
+        size: "1024x1024"
+      });
+};
 
 const handler = async (req, res) => {
     const { type } = req.query;
@@ -60,16 +68,42 @@ const generateImage = async (req, res) => {
         })
     }
 
-    const prompt = `Generate a DALE-2 image generation prompt for this text:
-    Text: ${userInput}`
-    console.log(`Final image gpt3 prompt: `, prompt)
+    const basePromptPrefix = `Summarize the below text, Text: ${userInput}`;
+    const promptEng = "Create a DALE-2 image generation prompt of the above summary, use this format: Prompt: ${answer}";
+    const gpt3Prompt = `${basePromptPrefix}
+    ${promptEng}`;
+
     // generate a DALE 2 prompt
-    const gpt3res = await generateGPT3Res(prompt)
+    const gpt3res = await generateGPT3Res(gpt3Prompt)
     const dale2prompt = gpt3res.data.choices.pop();
-    console.log(`Final DALE2 prompt: `, dale2prompt);
-    res.status(200).json({
-        output: dale2prompt
-    });
+
+    if(!dale2prompt) {
+        res.status(500).json({
+            output: 'Failed to generate prompt for DALE-2'
+        })
+    }
+
+//    console.log(`Final DALE-2 prompt: `, dale2prompt);
+
+
+    console.log(`Generated DALE-2 prompt: `, dale2prompt.text);
+    // split it from 'Prompt:' and take the first array element
+    const dale2ImagePrompt = dale2prompt.text.split('Prompt: ')[1];
+
+    console.log(dale2ImagePrompt)
+    const response = await generateDale2Image(dale2ImagePrompt);
+
+    const imgSrc = response?.data?.data?.[0].url;
+    console.log(imgSrc);
+
+    // check for error
+    if(!imgSrc) {
+        res.status(500).json({
+            output: 'Failed to generate image'
+        })
+    };
+
+    res.status(200).json({ output: imgSrc });
 }
 
 export default handler;
