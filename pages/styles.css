@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 /* :root {
   --primary-color: #222;
@@ -128,9 +131,6 @@ body {
 }
 
 .output {
-  border: 2px solid #757575;
-  border-radius: 4px;
-  margin-top: 24px;
   width: 100%;
 }
 
@@ -189,4 +189,26 @@ body {
   .header-title h1 {
     font-size: 48px;
   }
+}
+
+
+.masonry {
+  column-count: 1;
+  column-gap: 1.5rem;
+}
+
+@screen sm {
+  .masonry {
+    column-count: 2;
+  }
+}
+
+@screen lg {
+  .masonry {
+    column-count: 3;
+  }
+}
+
+.card-ovarlay {
+  background: linear-gradient(0deg, black, transparent);
 }

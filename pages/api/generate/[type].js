@@ -1,16 +1,16 @@
 import { Configuration, OpenAIApi } from 'openai';
 
 const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY,
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 const openai = new OpenAIApi(configuration);
 
 const addPeriod = (input) => {
-  if (!input.match(/[.!?]$/)) {
-    input += '.';
-  }
-  return input;
+    if (!input.match(/[.!?]$/)) {
+        input += '.';
+    }
+    return input;
 };
 
 const basePromptPrefix = `Write me a Freudian analysis in a statement form of the following dream in a casual tone spoken by a 23-year-old from Brooklyn, New York:
@@ -29,21 +29,21 @@ const generateGPT3Res = async (prompt) => {
 const generateDale2Image = async (prompt) => {
     return await openai.createImage({
         prompt,
-        n: 1,
+        n: 5,
         size: "1024x1024"
-      });
+    });
 };
 
 const handler = async (req, res) => {
     const { type } = req.query;
 
-    switch (type){
+    switch (type) {
         case 'dream':
             return generateDream(req, res);
         case 'image':
             return generateImage(req, res);
         default:
-            res.status(404).json({output: 'Invalid request'})
+            res.status(404).json({ output: 'Invalid request' })
     }
 };
 
@@ -51,8 +51,7 @@ const generateDream = async (req, res) => {
     console.log(`API: ${basePromptPrefix}${req.body.userInput}`);
 
     const finalUserInput = addPeriod(req.body.userInput);
-    const gpt3Prompt = `${basePromptPrefix}${finalUserInput}`
-    ;
+    const gpt3Prompt = `${basePromptPrefix}${finalUserInput}`;
     console.log(`Final dream prompt: `, gpt3Prompt);
     const baseCompletion = await generateGPT3Res(gpt3Prompt);
     const basePromptOutput = baseCompletion.data.choices.pop();
@@ -62,7 +61,7 @@ const generateDream = async (req, res) => {
 const generateImage = async (req, res) => {
     // input consist of the dream that we previously generated
     const userInput = req?.body?.userInput;
-    if(!userInput) {
+    if (!userInput) {
         res.status(403).json({
             output: 'Invalid user input.'
         })
@@ -77,14 +76,11 @@ const generateImage = async (req, res) => {
     const gpt3res = await generateGPT3Res(gpt3Prompt)
     const dale2prompt = gpt3res.data.choices.pop();
 
-    if(!dale2prompt) {
+    if (!dale2prompt) {
         res.status(500).json({
             output: 'Failed to generate prompt for DALE-2'
         })
     }
-
-//    console.log(`Final DALE-2 prompt: `, dale2prompt);
-
 
     console.log(`Generated DALE-2 prompt: `, dale2prompt.text);
     // split it from 'Prompt:' and take the first array element
@@ -93,11 +89,10 @@ const generateImage = async (req, res) => {
     console.log(dale2ImagePrompt)
     const response = await generateDale2Image(dale2ImagePrompt);
 
-    const imgSrc = response?.data?.data?.[0].url;
-    console.log(imgSrc);
+    const imgSrc = response?.data?.data;
 
     // check for error
-    if(!imgSrc) {
+    if (!imgSrc) {
         res.status(500).json({
             output: 'Failed to generate image'
         })

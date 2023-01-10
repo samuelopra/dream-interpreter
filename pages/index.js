@@ -1,8 +1,8 @@
 import Head from 'next/head';
 import Image from 'next/image';
 import paramintLogo from '../assets/paramint-leaf.png';
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
+import Grid from './grid';
 
 const GenerateButton = ({ loading, onClick, title }) => {
   return (<div className='prompt-buttons'>
@@ -18,17 +18,20 @@ const GenerateButton = ({ loading, onClick, title }) => {
     </a></div>)
 }
 
-// render image using Image component
-const GeneratedImage = ({ imageBlob }) => {
-  return (<Image src={imageBlob} width="200" height="200" />)
+const renderImages = (images) => {
+  console.log("Images", images)
+  if (!images || images.length < 1) {
+    return null;
+  }
+  return (images.map(image => <img src={image.url}></img>));
 }
 
 const Home = () => {
   const [userInput, setUserInput] = useState('');
 
   const [apiOutput, setApiOutput] = useState({
-    dream: '',
-    image: ''
+    dream: ``,
+    image: []
   });
 
   const [isGenerating, setIsGenerating] = useState({
@@ -86,7 +89,7 @@ const Home = () => {
     console.log('OpenAI replied...', output);
     setApiOutput({
       ...apiOutput,
-      image: `${output}`
+      image: output
     });
     setIsGenerating({
       ...isGenerating,
@@ -94,6 +97,15 @@ const Home = () => {
     });
   };
 
+  useEffect(() => {
+    if (apiOutput.dream) {
+      setIsGenerating(state => ({
+        ...state,
+        dream: true
+      }))
+      callGenerateImageEndpoint();
+    }
+  }, [apiOutput.dream]);
 
   const onUserChangedText = (event) => {
     setUserInput(event.target.value);
@@ -126,23 +138,23 @@ const Home = () => {
         </div>
         <GenerateButton title="Generate" loading={isGenerating.dream} onClick={callGenerateEndpoint}></GenerateButton>
       </div>
-      {apiOutput.dream && (
-        <div className='output'>
-          <div className='output-header-container'>
-            <div className='output-header'>
-              <h3>Output</h3>
+      <Grid>
+        <div>
+          {apiOutput.dream && (<div className="rounded-lg h-full">
+            <div className='output'>
+              <div className='output-header-container'>
+                <div className='output-header'>
+                  <h3>Output</h3>
+                </div>
+              </div>
+              <div className='output-content'>
+                <p>{apiOutput.dream}</p>
+              </div>
             </div>
-          </div>
-          <div className='output-content'>
-            <p>{apiOutput.dream}</p>
-          </div>
+          </div>)}
+          {apiOutput.image && renderImages(apiOutput.image)}
         </div>
-      )}
-      {apiOutput.dream && (<GenerateButton title="Generate an image of Your dream" loading={isGenerating.image} onClick={callGenerateImageEndpoint}></GenerateButton>)}
-      {apiOutput.image && !isGenerating.image && !isGenerating.dream && (
-        <GeneratedImage imageBlob={apiOutput.image}></GeneratedImage>
-      )}
-
+      </Grid >
       {/* <div className='badge-container grow'>
         <a href='https://paramint.digital' target='_blank' rel='noreferrer'>
           <div className='badge'>
@@ -152,7 +164,7 @@ const Home = () => {
         </a>
       </div> */}
 
-    </div>
+    </div >
   );
 };
 
