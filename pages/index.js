@@ -13,7 +13,7 @@ const GenerateButton = ({ loading, onClick, title }) => {
       onClick={onClick}
     >
       <div className='generate'>
-          <p>{loading? 'Generating ...' : title}</p>
+        <p>{loading ? 'Generating ...' : title}</p>
       </div>
     </a></div>)
 }
