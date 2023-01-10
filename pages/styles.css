@@ -113,7 +113,9 @@ body {
   justify-content: center;
   outline: none;
   transition: background-color 0.2s ease-in;
-  width: 128px;
+  max-width: 400px;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 
 .generate-button:hover {
