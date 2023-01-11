@@ -88,7 +88,9 @@ const generateImage = async (req, res) => {
   const dalle2ImagePrompt = dalle2prompt.text.split('DALLE-2 Prompt: ')[1];
 
   console.log(dalle2ImagePrompt);
-  const response = await generateDalle2Image(` ${dalle2ImagePrompt}, painting`);
+  const response = await generateDalle2Image(
+    ` ${dalle2ImagePrompt}, high details, realistic, 8k, cinematic style`
+  );
 
   const imgSrc = response?.data?.data;
 
