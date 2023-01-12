@@ -59,6 +59,7 @@ const generateDream = async (req, res) => {
 };
 
 const generateImage = async (req, res) => {
+  console.log('body', req?.body);
   // input consist of the dream that we previously generated
   const userInput = req?.body?.userInput;
   if (!userInput) {
@@ -69,10 +70,11 @@ const generateImage = async (req, res) => {
 
   const basePromptPrefix = `Dream: ${userInput}`;
   const promptEng =
-    'Given a dream, generate a DALLE-2 image generation prompt that depicts the scenery of the following dream in 300 characters or less. The prompt should recreate the situation in the dream and use each noun. Use the format: DALLE-2 Prompt: ${answer}';
+    'Given a dream, generate a DALLE-2 image generation prompt that depicts all of the scenery of the following dream in 300 characters or less. One should be able to look at the image and guess the dream. The prompt should recreate the situation in the dream and use each noun. Use the format: DALLE-2 Prompt: ${answer}';
   const gpt3Prompt = `${basePromptPrefix}
     ${promptEng}`;
 
+  console.log('gpt3prompt', gpt3Prompt);
   // generate a DALL-E 2 prompt
   const gpt3res = await generateGPT3Res(gpt3Prompt);
   const dalle2prompt = gpt3res.data.choices.pop();
@@ -89,7 +91,7 @@ const generateImage = async (req, res) => {
 
   console.log(dalle2ImagePrompt);
   const response = await generateDalle2Image(
-    ` ${dalle2ImagePrompt}, high details, realistic, 8k, cinematic style`
+    ` ${dalle2ImagePrompt}, high details, 8k, cinematic style`
   );
 
   const imgSrc = response?.data?.data;

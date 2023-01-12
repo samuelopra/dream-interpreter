@@ -5,44 +5,45 @@ import { useState, useEffect } from 'react';
 import Grid from './grid';
 
 const GenerateButton = ({ loading, onClick, title }) => {
-  return (<div className='prompt-buttons'>
-    <a
-      className={
-        loading ? 'generate-button loading' : 'generate-button'
-      }
-      onClick={onClick}
-    >
-      <div className='generate'>
-        <p>{loading ? 'Generating ...' : title}</p>
-      </div>
-    </a></div>)
-}
+  return (
+    <div className='prompt-buttons'>
+      <a
+        className={loading ? 'generate-button loading' : 'generate-button'}
+        onClick={onClick}
+      >
+        <div className='generate'>
+          <p>{loading ? 'Generating ...' : title}</p>
+        </div>
+      </a>
+    </div>
+  );
+};
 
 const renderImages = (images) => {
-  console.log("Images", images)
+  console.log('Images', images);
   if (!images || images.length < 1) {
     return null;
   }
-  return (images.map(image => <img src={image.url}></img>));
-}
+  return images.map((image) => <img src={image.url}></img>);
+};
 
 const Home = () => {
   const [userInput, setUserInput] = useState('');
 
   const [apiOutput, setApiOutput] = useState({
     dream: ``,
-    image: []
+    image: [],
   });
 
   const [isGenerating, setIsGenerating] = useState({
     dream: false,
-    image: false
+    image: false,
   });
 
   const callGenerateEndpoint = async () => {
     setIsGenerating({
       ...isGenerating,
-      dream: true
+      dream: true,
     });
 
     console.log('Calling OpenAI...');
@@ -60,19 +61,19 @@ const Home = () => {
 
     setApiOutput({
       ...apiOutput,
-      dream: `${output.text}`
+      dream: `${output.text}`,
+      originalInput: `${userInput}`,
     });
     setIsGenerating({
       ...isGenerating,
-      dream: false
+      dream: false,
     });
   };
-
 
   const callGenerateImageEndpoint = async () => {
     setIsGenerating({
       ...isGenerating,
-      image: true
+      image: true,
     });
 
     console.log('Calling OpenAI...');
@@ -81,7 +82,7 @@ const Home = () => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ userInput: apiOutput.dream }),
+      body: JSON.stringify({ userInput: apiOutput.originalInput }),
     });
 
     const data = await response.json();
@@ -89,7 +90,7 @@ const Home = () => {
     console.log('OpenAI replied...', output);
     setApiOutput({
       ...apiOutput,
-      image: output
+      image: output,
     });
     setIsGenerating({
       ...isGenerating,
@@ -99,10 +100,10 @@ const Home = () => {
 
   useEffect(() => {
     if (apiOutput.dream) {
-      setIsGenerating(state => ({
+      setIsGenerating((state) => ({
         ...state,
-        dream: true
-      }))
+        dream: true,
+      }));
       callGenerateImageEndpoint();
     }
   }, [apiOutput.dream]);
@@ -136,25 +137,31 @@ const Home = () => {
             onChange={onUserChangedText}
           />
         </div>
-        <GenerateButton title="Generate" loading={isGenerating.dream} onClick={callGenerateEndpoint}></GenerateButton>
+        <GenerateButton
+          title='Generate'
+          loading={isGenerating.dream}
+          onClick={callGenerateEndpoint}
+        ></GenerateButton>
       </div>
       <Grid>
         <div>
-          {apiOutput.dream && (<div className="rounded-lg h-full">
-            <div className='output'>
-              <div className='output-header-container'>
-                <div className='output-header'>
-                  <h3>Output</h3>
+          {apiOutput.dream && (
+            <div className='rounded-lg h-full'>
+              <div className='output'>
+                <div className='output-header-container'>
+                  <div className='output-header'>
+                    <h3>Output</h3>
+                  </div>
+                </div>
+                <div className='output-content'>
+                  <p>{apiOutput.dream}</p>
                 </div>
               </div>
-              <div className='output-content'>
-                <p>{apiOutput.dream}</p>
-              </div>
             </div>
-          </div>)}
+          )}
           {apiOutput.image && renderImages(apiOutput.image)}
         </div>
-      </Grid >
+      </Grid>
       {/* <div className='badge-container grow'>
         <a href='https://paramint.digital' target='_blank' rel='noreferrer'>
           <div className='badge'>
@@ -163,8 +170,7 @@ const Home = () => {
           </div>
         </a>
       </div> */}
-
-    </div >
+    </div>
   );
 };
 
