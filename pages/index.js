@@ -57,6 +57,9 @@ const Home = () => {
     setChatHistory([...chatHistory, { role: 'user', content: userInput }, { role: 'assistant', content: output?.message?.content }]);
     setApiOutput({ ...apiOutput, dream: output?.message?.content });
     setIsGenerating({ ...isGenerating, dream: false });  // Set to false when done
+
+    // Clear userInput after message is sent
+    setUserInput('');
   };
   
   useEffect(() => {
