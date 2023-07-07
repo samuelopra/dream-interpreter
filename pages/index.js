@@ -1,30 +1,19 @@
 import Head from 'next/head';
-import Image from 'next/image';
-import paramintLogo from '../assets/paramint-leaf.png';
+import ChatMessage from '../components/ChatMessage';
 import { useState, useEffect } from 'react';
-import Grid from './grid';
 
 const GenerateButton = ({ loading, onClick, title }) => {
   return (
     <div className='prompt-buttons'>
-      <a
+      <button
         className={loading ? 'generate-button loading' : 'generate-button'}
         onClick={onClick}
+        disabled={loading} // disable button when loading
       >
-        <div className='generate'>
-          <p>{loading ? 'Generating ...' : title}</p>
-        </div>
-      </a>
+        <span className='button-content'>{loading ? '...' : title}</span>
+      </button>
     </div>
   );
-};
-
-const renderImages = (images) => {
-  console.log('Images', images);
-  if (!images || images.length < 1) {
-    return null;
-  }
-  return images.map((image) => <img src={image.url}></img>);
 };
 
 const Home = () => {
@@ -40,71 +29,43 @@ const Home = () => {
     image: false,
   });
 
-  const callGenerateEndpoint = async () => {
-    setIsGenerating({
-      ...isGenerating,
-      dream: true,
-    });
+  const [chatHistory, setChatHistory] = useState([]);
 
-    console.log('Calling OpenAI...');
+
+  const callGenerateEndpoint = async () => {
+    // Add loading message to chat history
+    const newChatHistory = [
+      ...chatHistory,
+      { role: 'user', content: userInput },
+      { role: 'assistant', content: 'Generating...' },
+    ];
+    setChatHistory(newChatHistory);
+
+    // Remove the 'Generating...' from the button and disable it
+    setIsGenerating({ ...isGenerating, dream: true });
+
     const response = await fetch('/api/generate/dream', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userInput }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chatHistory: newChatHistory }),
     });
 
     const data = await response.json();
     const { output } = data;
-    console.log('OpenAI replied...', output.text);
 
-    setApiOutput({
-      ...apiOutput,
-      dream: `${output.text}`,
-      originalInput: `${userInput}`,
-    });
-    setIsGenerating({
-      ...isGenerating,
-      dream: false,
-    });
+    // Update chat history with the response from the API, removing the 'Generating...' message
+    setChatHistory([...chatHistory, { role: 'user', content: userInput }, { role: 'assistant', content: output?.message?.content }]);
+    setApiOutput({ ...apiOutput, dream: output?.message?.content });
+    setIsGenerating({ ...isGenerating, dream: false });  // Set to false when done
   };
-
-  const callGenerateImageEndpoint = async () => {
-    setIsGenerating({
-      ...isGenerating,
-      image: true,
-    });
-
-    console.log('Calling OpenAI...');
-    const response = await fetch('/api/generate/image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ userInput: apiOutput.originalInput }),
-    });
-
-    const data = await response.json();
-    const { output } = data;
-    console.log('OpenAI replied...', output);
-    setApiOutput({
-      ...apiOutput,
-      image: output,
-    });
-    setIsGenerating({
-      ...isGenerating,
-      image: false,
-    });
-  };
-
+  
   useEffect(() => {
     if (apiOutput.dream) {
       setIsGenerating((state) => ({
         ...state,
-        dream: true,
+        dream: false, // set to false when dream is done
       }));
-      callGenerateImageEndpoint();
+     //callGenerateImageEndpoint();
     }
   }, [apiOutput.dream]);
 
@@ -124,52 +85,28 @@ const Home = () => {
           </div>
           <div className='header-subtitle'>
             <h2>
-              Dreams are often not literal. Write a message to Freud, the dream
-              interpreter to find out what they really mean
+              Dreams are often not literal. Write a message to Sam, the dream
+              interpreting expert to find out what they really mean.
             </h2>
           </div>
         </div>
-        <div className='prompt-container'>
+        <div className='chat-container'>
+          {chatHistory.map((msg, index) => (
+            <ChatMessage key={index} role={msg.role} content={msg.content} />
+          ))}
           <textarea
-            placeholder='start typing here'
-            className='prompt-box'
+            placeholder='Describe your dream here...'
+            className='chat-input'
             value={userInput}
             onChange={onUserChangedText}
           />
         </div>
         <GenerateButton
-          title='Generate'
+          title='Send'
           loading={isGenerating.dream}
           onClick={callGenerateEndpoint}
         ></GenerateButton>
       </div>
-      <Grid>
-        <div>
-          {apiOutput.dream && (
-            <div className='rounded-lg h-full'>
-              <div className='output'>
-                <div className='output-header-container'>
-                  <div className='output-header'>
-                    <h3>Output</h3>
-                  </div>
-                </div>
-                <div className='output-content'>
-                  <p>{apiOutput.dream}</p>
-                </div>
-              </div>
-            </div>
-          )}
-          {apiOutput.image && renderImages(apiOutput.image)}
-        </div>
-      </Grid>
-      {/* <div className='badge-container grow'>
-        <a href='https://paramint.digital' target='_blank' rel='noreferrer'>
-          <div className='badge'>
-            <Image src={paramintLogo} alt='paramint logo' />
-            <p>dream interpreter by Paramint</p>
-          </div>
-        </a>
-      </div> */}
     </div>
   );
 };

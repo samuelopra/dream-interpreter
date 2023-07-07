@@ -6,30 +6,25 @@ const configuration = new Configuration({
 
 const openai = new OpenAIApi(configuration);
 
-const addPeriod = (input) => {
-  if (!input.match(/[.!?]$/)) {
-    input += '.';
+const generateGPT4Chat = async (chatHistory) => {
+
+  if (!Array.isArray(chatHistory)) {
+    console.log('chatHistory is not an array:', chatHistory);
+    return res.status(400).json({ error: 'chatHistory is not an array' });
   }
-  return input;
-};
-
-const basePromptPrefix = `Sam is an expert dream analyzer who is able to explain the meaning of dreams in a very easy to digest way and with casual tone. The following dream input comes from an indivudal that is looking to have their dream analyzed by Sam. Sam will analyze the following dream in Sam's 23 year old casual tone from Brooklyn.
-Dream: `;
-
-const generateGPT3Res = async (prompt) => {
-  return await openai.createCompletion({
-    model: 'text-davinci-003',
-    prompt,
+  
+  // prepend the two messages
+  const messages = [
+    {role: "user", content: "Act as an expert dream analyzer who is able to explain the meaning of dreams in a very easy to digest way and with casual tone. He is also an expert therapist. The following dream input comes from an individual that is looking to have their dream analyzed by Sam. Sam will analyze the following dream in Sam's 30 year old casual tone from Brooklyn. Sam will do whatever he can to help the individual understand the meaning of the dream and if they ask, he can help them with their problems."},
+    {role: "assistant", content: "Sounds good. Let's get started. What is the dream?"},
+    ...chatHistory
+  ];
+  
+  return await openai.createChatCompletion({
+    model: 'gpt-4',
+    messages: messages,
     temperature: 0.8,
-    max_tokens: 500,
-  });
-};
-
-const generateDalle2Image = async (prompt) => {
-  return await openai.createImage({
-    prompt,
-    n: 5,
-    size: '1024x1024',
+    max_tokens: 1000,
   });
 };
 
@@ -38,72 +33,27 @@ const handler = async (req, res) => {
 
   switch (type) {
     case 'dream':
-      return generateDream(req, res);
+      return generateGPT4Dream(req, res);
     case 'image':
-      return generateImage(req, res);
+      console.log('pause image generation for now');
     default:
       res.status(404).json({ output: 'Invalid request' });
   }
 };
+const generateGPT4Dream = async (req, res) => {
+  const chatHistory = req.body.chatHistory;
+  console.log('chatHistory', chatHistory);
+  const latestUserMessage = chatHistory.find(message => message.role === 'user');
+  const latestUserInput = latestUserMessage ? latestUserMessage.content : null;
 
-const generateDream = async (req, res) => {
-  console.log(`API: ${basePromptPrefix}${req.body.userInput}`);
-  //const finalUserInput = addPeriod(req.body.userInput);
-  const gpt3Prompt = `${basePromptPrefix}${req.body.userInput}
-  
-  Sam's Analysis:`;
-  console.log(`Final dream prompt: `, gpt3Prompt);
-  const baseCompletion = await generateGPT3Res(gpt3Prompt);
-  const basePromptOutput = baseCompletion.data.choices.pop();
-  res.status(200).json({ output: basePromptOutput });
-};
+  console.log('API:', latestUserInput);
 
-const generateImage = async (req, res) => {
-  console.log('body', req?.body);
-  // input consist of the dream that we previously generated
-  const userInput = req?.body?.userInput;
-  if (!userInput) {
-    res.status(403).json({
-      output: 'Invalid user input.',
-    });
-  }
-
-  const basePromptPrefix = `Dream: ${userInput}`;
-  const promptEng =
-    'Given a dream, generate a DALLE-2 image generation prompt that depicts all of the scenery of the following dream in 300 characters or less. One should be able to look at the image and guess the dream. The prompt should recreate the situation in the dream and use each noun. Use the format: DALLE-2 Prompt: ${answer}';
-  const gpt3Prompt = `${basePromptPrefix}
-    ${promptEng}`;
-
-  console.log('gpt3prompt', gpt3Prompt);
-  // generate a DALL-E 2 prompt
-  const gpt3res = await generateGPT3Res(gpt3Prompt);
-  const dalle2prompt = gpt3res.data.choices.pop();
-
-  if (!dalle2prompt) {
-    res.status(500).json({
-      output: 'Failed to generate prompt for DALLE-2',
-    });
-  }
-
-  console.log(`Generated DALLE-2 prompt: `, dalle2prompt.text);
-  // split it from 'Prompt:' and take the first array element
-  const dalle2ImagePrompt = dalle2prompt.text.split('DALLE-2 Prompt: ')[1];
-
-  console.log(dalle2ImagePrompt);
-  const response = await generateDalle2Image(
-    ` ${dalle2ImagePrompt}, high details, 8k, cinematic style`
-  );
-
-  const imgSrc = response?.data?.data;
-
-  // check for error
-  if (!imgSrc) {
-    res.status(500).json({
-      output: 'Failed to generate image',
-    });
-  }
-
-  res.status(200).json({ output: imgSrc });
+  const gpt4Dream = latestUserInput;
+  console.log(`Final dream prompt: `, gpt4Dream);
+  const baseChatCompletion = await generateGPT4Chat(chatHistory);
+  console.log('baseChatCompletion', baseChatCompletion);
+  const baseChatPromptOutput = baseChatCompletion.data.choices.pop();
+  res.status(200).json({ output: baseChatPromptOutput });
 };
 
 export default handler;
